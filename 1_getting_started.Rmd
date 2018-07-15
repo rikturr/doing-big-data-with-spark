@@ -27,7 +27,7 @@ spark_install(version = "2.3.0")
 
 # Initialize Spark
 
-Can also do this from the Spark tab in RStudio.
+Can also do this from the Connections tab in RStudio. You may need to install Java if you don't already have it.
 
 Do this at the top of every script/notebook.
 
@@ -37,10 +37,3 @@ sc <- spark_connect(master = "local")
 ```
 
 The `master` argument will be different if you are running against a real Spark cluster: http://spark.rstudio.com/examples/
-
-# 
-
-```{r}
-
-```
-
