@@ -1,0 +1,46 @@
+---
+title: "Doing big data with Spark Pt. 1"
+output: html_notebook
+---
+
+# Getting Started
+
+# Links
+
+Slides
+
+* https://github.com/rikturr/doing-big-data-with-spark/blob/master/slides.pdf
+
+Some good references
+
+* http://spark.rstudio.com/
+* https://spark.apache.org/
+
+# Install sparklyr + Spark
+
+```{r, eval=F}
+# run this once
+install.packages("sparklyr")
+library(sparklyr)
+spark_install(version = "2.3.0")
+```
+
+# Initialize Spark
+
+Can also do this from the Spark tab in RStudio.
+
+Do this at the top of every script/notebook.
+
+```{r}
+library(sparklyr)
+sc <- spark_connect(master = "local")
+```
+
+The `master` argument will be different if you are running against a real Spark cluster: http://spark.rstudio.com/examples/
+
+# 
+
+```{r}
+
+```
+
