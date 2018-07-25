@@ -36,11 +36,23 @@ library(sparklyr)
 sc <- spark_connect(master = "local")
 ```
 
-The `master` argument will be different if you are running against a real Spark cluster: http://spark.rstudio.com/examples/
+The `master` argument will be different if you are running against a real Spark cluster: http://spark.rstudio.com/examples/. Also, you may need to allocate more memory for doing intense things:
+
+```{r}
+config <- spark_config()
+config$`sparklyr.shell.driver-memory` <- "4G"
+config$`sparklyr.shell.executor-memory` <- "4G"
+sc <- spark_connect(master = "local", config = config)
+```
 
 # Your best friend
+
+The docs are pretty good for `sparklyr`
 
 ```{r}
 ?spark_connect
 ```
 
+# Put it all together
+
+To make life easier, we have a `spark_init.R` file so we don't have to copy/paste it over and over.

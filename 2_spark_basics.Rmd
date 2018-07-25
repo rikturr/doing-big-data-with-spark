@@ -16,13 +16,7 @@ The `sparklyr` API is fairly standard, with specific prefixes for groups of func
 * `dplyr` verbs: most `dplyr` stuff can be done on a Spark Dataframe
 
 ```{r}
-library(sparklyr)
-library(dplyr)
-
-config <- spark_config()
-config$`sparklyr.shell.driver-memory` <- "4G"
-config$`sparklyr.shell.executor-memory` <- "4G"
-sc <- spark_connect(master = "local", config = config)
+source('spark_init.R')
 ```
 
 ## Read in data
@@ -165,3 +159,6 @@ predictions <- ml_transform(fitted, train_test$testing)
 head(predictions)
 ```
 
+## Spark UI
+
+Click SparkUI in the Connections tab for nice info about Spark things

@@ -1,0 +1,148 @@
+---
+title: "Doing big data with Spark Pt. 3"
+output: html_notebook
+---
+
+# (sort of) Big data
+
+We will be using publicly available data from Medicare to illustrate how `sparklyr` makes large analysis possible, even just on our laptops.
+
+## Medicare Payments Data
+
+This dataset includes data about payments for services for Medicare providers during the 2015 calendar year. There is one row per provider/HCPCS code and several aggregate columns describing the number of times the provider billed for the code, average submitted amount, average paid amount, etc.
+
+[This page](https://www.cms.gov/Research-Statistics-Data-and-Systems/Statistics-Trends-and-Reports/Medicare-Provider-Charge-Data/Physician-and-Other-Supplier2015.html) provides more info and download links. 
+
+Make sure to download the [tab-delimited file](http://www.cms.gov/apps/ama/license.asp?file=http://download.cms.gov/Research-Statistics-Data-and-Systems/Statistics-Trends-and-Reports/Medicare-Provider-Charge-Data/Downloads/Medicare_Provider_Util_Payment_PUF_CY2015.zip). It is rather hefty (~2GB uncompressed), so be prepared to wait when downloading and uncompressing.
+
+This notebook assumes that the Part B file is in the same directory and has the name `medicare_partb_2015.txt`
+
+```{r}
+library(ggplot2)
+source('spark_init.R')
+```
+
+## Caching
+
+Since Spark evaluates in a lazy manner, each time you execute an action it will run the entire chain of commands, including reading the data from its source. Therefore, if you are calling several actions on a Dataframe, it will re-load the data each time. 
+
+Caching allows Spark to process the whole Dataframe once and then save that into memory on the cluster. There are trade-offs with caching, and the general rules are:
+
+* If you are re-using a Dataframe multiple times, try caching it 
+* If your data is really huge, and you only need small portion of it, do not cache. 
+
+You don't notice it will small data, but `sparklyr` *caches* all tables into memory by default (I don't like this). Set `memory = F` with `spark_read_` functions to disable caching.
+
+```{r}
+partb <- spark_read_csv(sc, 'partb', 'medicare_partb_2015.txt', delimiter = '\t', memory = F)
+```
+
+```{r}
+file.info('medicare_partb_2015.txt')$size
+```
+
+```{r}
+pryr::object_size(partb)
+```
+
+This will take a while, or blow up (depending on how much RAM you have)
+
+```{r, eval = F}
+system.time({
+partb_cached <- spark_read_csv(sc, 'partb_cached', 'medicare_partb_2015.txt', delimiter = '\t')
+})
+```
+
+We don't want to cache anyway, because normally an analysis will be selecting certain columns, joining and performing aggregations first. Once we get a nice clean Dataframe for analysis, then we can cache it (especially if its being used for ML).
+
+## Explore the data
+
+```{r}
+colnames(partb)
+```
+
+```{r}
+head(partb)
+```
+
+```{r}
+sdf_nrow(partb)
+```
+
+```{r}
+partb %>% select(npi) %>% distinct() %>% count()
+```
+
+```{r}
+partb %>% select(npi, hcpcs_code) %>% distinct() %>% count()
+```
+
+Turns out there can be multiple rows per provider/HCPCS code (due to place of service), so we need to perform some aggregation. Let's also remove that annoying copyright line.
+
+```{r}
+partb %>% count(place_of_service)
+```
+
+```{r}
+partb_agg <- partb %>% 
+  filter(npi != 1) %>% 
+  group_by(npi, hcpcs_code, provider_type) %>% 
+  summarise(line_srvc_cnt = sum(line_srvc_cnt),
+            average_submitted_chrg_amt = mean(average_submitted_chrg_amt)) %>% 
+  ungroup()
+```
+
+Remember, that ^ didn't do anything! It will process only when you call an action.
+
+```{r}
+head(partb_agg)
+```
+
+```{r}
+partb_agg %>% select(npi, hcpcs_code) %>% distinct() %>% count()
+```
+
+## Plotting 
+
+One place where using `sparklyr` gets tricky is with plotting. When plotting, you need to collect all your data to the R session, so you have to perform some aggregations first before pulling it down. The difficult plots are those that summarise distribution (histograms, boxplots, etc.) because usually `ggplot2` does the computing for you.
+
+Let's look at the distribution of provider types
+
+```{r}
+provider_type <- partb_agg %>% 
+  group_by(provider_type) %>% 
+  summarise(n = n_distinct(npi)) %>% 
+  collect()
+head(provider_type)
+```
+
+```{r}
+provider_type %>% 
+  top_n(20) %>% 
+  ggplot(aes(x = reorder(provider_type, n), y = n)) +
+    geom_bar(stat = 'identity', fill = 'light blue') +
+    xlab('') + ylab('Number of providers') + 
+    theme_minimal() + coord_flip()
+```
+
+Now let's see the distribution of submitted amounts for the most frequent HCPCS codes. We would have to compute the summary stats ourselves because the data is too big to fit in memory. Luckily, our friend Edgar Ruiz has a handy package to create plots from database (or Spark) dplyr backends:
+
+* [dbplot](https://github.com/edgararuiz/dbplot)
+
+```{r}
+hcpcs_count <- partb_agg %>% count(hcpcs_code) %>% collect()
+top5_hcpcs <- hcpcs_count %>% top_n(5, n)
+```
+
+```{r}
+library(dbplot)
+partb_agg %>% 
+  filter(hcpcs_code %in% top5_hcpcs$hcpcs_code) %>% 
+  dbplot_boxplot(hcpcs_code, average_submitted_chrg_amt) +
+  xlab('HCPCS') + ylab('Average submitted charge') + 
+  theme_minimal()
+```
+
+## Homework
+
+See if all we did in this notebook would be possible with vanilla R or `dplyr` without Spark :)
