@@ -23,7 +23,7 @@ source('spark_init.R')
 
 * http://spark.rstudio.com/dplyr/#reading-data 
 
-We will use the same advertising dataset as [LESSON NAME??] and build a linear regression model. Along the way we will learn some tips and tricks for using Spark and `sparklyr`.
+We will use a small dataset used in [*An Introduction to Statistical Learning*](http://www-bcf.usc.edu/~gareth/ISL/) to build a linear regression model. Along the way we will learn some tips and tricks for using Spark and `sparklyr`.
 
 ```{r}
 download.file('http://www-bcf.usc.edu/~gareth/ISL/Advertising.csv', 
