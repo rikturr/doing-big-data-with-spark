@@ -22,7 +22,7 @@ Some good references
 # run this once
 install.packages("sparklyr")
 library(sparklyr)
-spark_install(version = "2.3.0")
+spark_install(version = "2.2.0")
 ```
 
 # Initialize Spark
