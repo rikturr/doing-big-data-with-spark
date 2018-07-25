@@ -5,13 +5,23 @@ output: html_notebook
 
 # sparklyr basics
 
+## Quick Reference
+
+The `sparklyr` API is fairly standard, with specific prefixes for groups of functions:
+
+* `spark_`: General Spark things, such as reading/writing Dataframes, managing config, and intializing the Spark session
+* `sdf_`: Spark Dataframe functions, these functions operate on a Dataframe as a whole
+* `ml_`: ML stuff, pipelines, classifiers, etc
+* `ft_`: Feature transformers for use in ML pipelines
+* `dplyr` verbs: most `dplyr` stuff can be done on a Spark Dataframe
+
 ```{r}
 library(sparklyr)
 library(dplyr)
 
 config <- spark_config()
-config$`sparklyr.shell.driver-memory` <- "12G"
-config$`sparklyr.shell.executor-memory` <- "12G"
+config$`sparklyr.shell.driver-memory` <- "4G"
+config$`sparklyr.shell.executor-memory` <- "4G"
 sc <- spark_connect(master = "local", config = config)
 ```
 
@@ -24,11 +34,7 @@ We will use the same advertising dataset as [LESSON NAME??] and build a linear r
 ```{r}
 download.file('http://www-bcf.usc.edu/~gareth/ISL/Advertising.csv', 
               'advertising.csv')
-advertising <- spark_read_csv(sc, 
-                              name = 'advertising', 
-                              path = 'advertising.csv',
-                              memory = F, # we'll talk about this later
-                              )
+advertising <- spark_read_csv(sc, name = 'advertising', path = 'advertising.csv')
 ```
 
 When you "read" into a DataFrame with Spark, you aren't actually loading the whole DataFrame into memory. Rather, this is a pointer that the driver uses to interact with the DataFrame.
@@ -107,8 +113,55 @@ It dies, however, when we try to look at it
 head(sales_summary_bad)
 ```
 
+## Machine learning!
 
+Spark supports [ML Pipelines](https://spark.apache.org/docs/latest/ml-pipeline.html), which lets you define an entire sequence of preprocessing and machine learning steps in one go, similar to:
 
+* [R `recipes` package](https://www.rstudio.com/resources/webinars/creating-and-preprocessing-a-design-matrix-with-recipes/)
+* [`scikit-learn` pipelines](http://scikit-learn.org/stable/modules/pipeline.html)
+* [`sparklyr` pipelines documentation](http://spark.rstudio.com/guides/pipelines/)
 
+```{r}
+train_test <- sdf_partition(real_nums, training = 0.7, testing = 0.3)
+```
 
+```{r}
+train_test$training %>% count()
+```
+
+```{r}
+train_test$testing %>% count()
+```
+
+Spark expects all columns to be put together into a single "features" column and "label" column. Therefore, we need to assemble all features into a vector.
+
+```{r}
+pipeline <- ml_pipeline(sc) %>% 
+  ft_vector_assembler(c('TV', 'radio', 'newspaper'), 'features') %>%
+  ml_linear_regression(label_col = 'sales')
+pipeline
+```
+
+or, we can use the handy R formula syntax
+
+```{r}
+pipeline <- ml_pipeline(sc) %>% 
+  ft_r_formula(sales ~ TV + radio + newspaper) %>% 
+  ml_linear_regression()
+pipeline
+```
+
+Normally we would be doing other fancy things like scaling or bucketing, but we will leave that for a rainy day. For now, lets fit our model on training data.
+
+```{r}
+fitted <- ml_fit(pipeline, train_test$training)
+fitted
+```
+
+Then voila, predictions!
+
+```{r}
+predictions <- ml_transform(fitted, train_test$testing)
+head(predictions)
+```
 
