@@ -37,3 +37,10 @@ sc <- spark_connect(master = "local")
 ```
 
 The `master` argument will be different if you are running against a real Spark cluster: http://spark.rstudio.com/examples/
+
+# Your best friend
+
+```{r}
+?spark_connect
+```
+

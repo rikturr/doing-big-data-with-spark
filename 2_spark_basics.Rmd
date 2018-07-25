@@ -1,0 +1,114 @@
+---
+title: "Doing big data with Spark Pt. 2"
+output: html_notebook
+---
+
+# sparklyr basics
+
+```{r}
+library(sparklyr)
+library(dplyr)
+
+config <- spark_config()
+config$`sparklyr.shell.driver-memory` <- "12G"
+config$`sparklyr.shell.executor-memory` <- "12G"
+sc <- spark_connect(master = "local", config = config)
+```
+
+## Read in data
+
+* http://spark.rstudio.com/dplyr/#reading-data 
+
+We will use the same advertising dataset as [LESSON NAME??] and build a linear regression model. Along the way we will learn some tips and tricks for using Spark and `sparklyr`.
+
+```{r}
+download.file('http://www-bcf.usc.edu/~gareth/ISL/Advertising.csv', 
+              'advertising.csv')
+advertising <- spark_read_csv(sc, 
+                              name = 'advertising', 
+                              path = 'advertising.csv',
+                              memory = F, # we'll talk about this later
+                              )
+```
+
+When you "read" into a DataFrame with Spark, you aren't actually loading the whole DataFrame into memory. Rather, this is a pointer that the driver uses to interact with the DataFrame.
+
+Most normal R DataFrame stuff doesn't work:
+
+```{r}
+summary(advertising)
+```
+
+```{r}
+real_nums <- advertising * 1000
+```
+
+```{r}
+nrow(advertising)
+```
+
+This does work, though:
+
+```{r}
+head(advertising)
+```
+
+## dplyr to the rescue
+
+Luckily, the RStudio people are smart and kind, and `dplyr` works \*mostly\* seamlessly with `sparklyr`.
+
+* http://spark.rstudio.com/dplyr/#dplyr-verbs
+
+```{r}
+real_nums <- advertising %>% 
+  select(-`_c0`) %>% 
+  mutate_all(funs(. * 1000))
+```
+
+```{r}
+head(real_nums)
+```
+
+```{r}
+sales_summary <- real_nums %>% 
+  summarise(min_sales = min(sales),
+            max_sales = max(sales),
+            sd_sales = sd(sales))
+```
+
+If you need an actual R Dataframe (i.e. for graphing), you can run `collect`.
+
+*NOTE*: This will give you ALL your data. If you data really is "big" it will crash your driver and/or your R session. 
+
+```{r}
+sales_summary %>% collect()
+```
+
+## Lazy evaluation
+
+Spark executes in a lazy manner, meaning no processing is performed until an *action* is performed. Spark operations are categorized into *transformations* or *actions*. 
+
+* Example transformations: filter, mutate, group_by, summarise
+* Example actions: save, head, collect, View
+
+The following cell will work, because Spark does not yet know that `foo` isn't a real column.
+
+```{r}
+sales_summary_bad <- real_nums %>% 
+  filter(foo != 5) %>% 
+  summarise(min_sales = min(sales),
+            max_sales = max(sales),
+            sd_sales = sd(sales))
+```
+
+It dies, however, when we try to look at it
+
+```{r}
+head(sales_summary_bad)
+```
+
+
+
+
+
+
