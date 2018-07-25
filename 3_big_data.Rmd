@@ -31,7 +31,7 @@ Caching allows Spark to process the whole Dataframe once and then save that into
 * If you are re-using a Dataframe multiple times, try caching it 
 * If your data is really huge, and you only need small portion of it, do not cache. 
 
-You don't notice it will small data, but `sparklyr` *caches* all tables into memory by default (I don't like this). Set `memory = F` with `spark_read_` functions to disable caching.
+You don't notice it will small data, but `sparklyr` caches all tables into memory by default (I don't like this). Set `memory = F` with `spark_read_` functions to disable caching.
 
 ```{r}
 partb <- spark_read_csv(sc, 'partb', 'medicare_partb_2015.txt', delimiter = '\t', memory = F)
@@ -48,9 +48,7 @@ pryr::object_size(partb)
 This will take a while, or blow up (depending on how much RAM you have)
 
 ```{r, eval = F}
-system.time({
 partb_cached <- spark_read_csv(sc, 'partb_cached', 'medicare_partb_2015.txt', delimiter = '\t')
-})
 ```
 
 We don't want to cache anyway, because normally an analysis will be selecting certain columns, joining and performing aggregations first. Once we get a nice clean Dataframe for analysis, then we can cache it (especially if its being used for ML).

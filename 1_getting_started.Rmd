@@ -18,11 +18,20 @@ Some good references
 
 # Install sparklyr + Spark
 
-```{r, eval=F}
+```{r, eval = F}
 # run this once
 install.packages("sparklyr")
 library(sparklyr)
 spark_install(version = "2.2.0")
+```
+
+Also, make sure you have these packages installed, as later notebooks will use them
+
+```{r, eval = F}
+install.packages('dplyr')
+install.packages('pryr')
+install.packages('ggplot2')
+install.packages('dbplot')
 ```
 
 # Initialize Spark
