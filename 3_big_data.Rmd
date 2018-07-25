@@ -15,7 +15,7 @@ This dataset includes data about payments for services for Medicare providers du
 
 Make sure to download the [tab-delimited file](http://www.cms.gov/apps/ama/license.asp?file=http://download.cms.gov/Research-Statistics-Data-and-Systems/Statistics-Trends-and-Reports/Medicare-Provider-Charge-Data/Downloads/Medicare_Provider_Util_Payment_PUF_CY2015.zip). It is rather hefty (~2GB uncompressed), so be prepared to wait when downloading and uncompressing.
 
-This notebook assumes that the Part B file is in the same directory and has the name `medicare_partb_2015.txt`
+After you unzip the file, rename it to `medicare_partb_2015.txt` and move it to the same directory as this notebook.
 
 ```{r}
 library(ggplot2)

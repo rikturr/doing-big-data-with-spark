@@ -1,5 +1,3 @@
-# REMOVE BEFORE COMMITTING!!!
-Sys.setenv(SPARK_HOME = '/usr/local/opt/apache-spark/libexec')
 library(sparklyr)
 library(dplyr)
 

@@ -1,3 +1,7 @@
+# spark stuff
+derby.log
+metastore_db/*
+
 # History files
 .Rhistory
 .Rapp.history
