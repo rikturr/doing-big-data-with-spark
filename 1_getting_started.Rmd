@@ -1,6 +1,12 @@
 ---
 title: "Doing big data with Spark Pt. 1"
-output: html_notebook
+output:
+  html_document:
+    theme: lumen
+    toc: yes
+    toc_float: yes
+  html_notebook:
+    theme: lumen
 ---
 
 # Getting Started
@@ -47,7 +53,7 @@ sc <- spark_connect(master = "local")
 
 The `master` argument will be different if you are running against a real Spark cluster: http://spark.rstudio.com/examples/. Also, you may need to allocate more memory for doing intense things:
 
-```{r}
+```{r, eval=F}
 config <- spark_config()
 config$`sparklyr.shell.driver-memory` <- "4G"
 config$`sparklyr.shell.executor-memory` <- "4G"

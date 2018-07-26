@@ -1,6 +1,12 @@
 ---
 title: "Doing big data with Spark Pt. 2"
-output: html_notebook
+output:
+  html_document:
+    theme: lumen
+    toc: yes
+    toc_float: yes
+  html_notebook:
+    theme: lumen
 ---
 
 # sparklyr basics
@@ -39,7 +45,7 @@ Most normal R DataFrame stuff doesn't work:
 summary(advertising)
 ```
 
-```{r}
+```{r, error=T}
 real_nums <- advertising * 1000
 ```
 
@@ -103,7 +109,7 @@ sales_summary_bad <- real_nums %>%
 
 It dies, however, when we try to look at it
 
-```{r}
+```{r, error=T}
 head(sales_summary_bad)
 ```
 

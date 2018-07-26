@@ -1,6 +1,12 @@
 ---
 title: "Doing big data with Spark Pt. 3"
-output: html_notebook
+output:
+  html_document:
+    theme: lumen
+    toc: yes
+    toc_float: yes
+  html_notebook:
+    theme: lumen
 ---
 
 # (sort of) Big data
